@@ -1,3 +1,4 @@
 /* export-ignore
+/plugins export-ignore=unset
 rtmbot.py export-ignore=unset
 requirements.txt export-ignore=unset
