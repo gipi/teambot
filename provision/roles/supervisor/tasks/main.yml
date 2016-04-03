@@ -1,0 +1,20 @@
+---
+- name: install necessary packages
+  apt: name={{ item }} state=present
+  with_items:
+    - supervisor
+
+- name: create supervisor configuration file
+  template:
+    src=webapp.conf.j2
+    dest=/etc/supervisor/conf.d/{{ webapp_username }}.conf
+  notify:
+    - restart supervisor
+
+- name: configure sudo for restart {{ webapp_username }}
+  lineinfile: "dest=/etc/sudoers state=present regexp='^%{{ webapp_username }}' line='%{{ webapp_username }} ALL = (root) NOPASSWD:/usr/bin/supervisorctl [a-z]* {{ webapp_username }}'"
+
+#
+- name: enforce supervisor enabled state
+  service: name=supervisor enabled=yes
+

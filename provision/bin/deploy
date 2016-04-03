@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# wrap fabric
+# create symbolic link with a name describing type of release
+
+readonly PROGNAME=$(basename "$0")
+readonly PROGDIR=$(readlink -m $(dirname $0))
+
+COMMAND=""
+
+[ "$PROGNAME" != "deploy" ] && COMMAND="${PROGNAME}"
+# '-a' to avoid quering ssh agent: https://stackoverflow.com/questions/5246416/python-fabric-gives-fatal-error-no-existing-session
+fab -a -f "${PROGDIR}/../fabfile.py" "$@"

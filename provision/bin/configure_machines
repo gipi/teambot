@@ -1,0 +1,79 @@
+
+#!/bin/bash
+#
+# All the mumbo-jumbo with the paths is for be sure that the paths
+# passed from command line are relative from the working directory at
+# the time of launch, while the default values are with respect to
+# the provisioning files directory
+
+readonly PROGNAME=$(basename "$0")
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+readonly PROGDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+PROVISION_DIR="${PROGDIR}/../"
+
+INVENTORY_FILE="${PROVISION_DIR}ansible_vagrant_inventory"
+VARIABLES_FILE="${PROVISION_DIR}ansible_vagrant_variables"
+PLAYBOOK="${PROVISION_DIR}playbook.yml"
+
+
+ANSIBLE_EXTRA_ARGS=""
+
+usage() {
+    cat <<- EOF
+usage: $0 [-i <inventory>] [-v <variables>] [-h] [-d] [-l] [-s] [-p]
+EOF
+}
+
+cmdline() {
+    while getopts "hdsplv:i:" OPTION
+    do
+         case $OPTION in
+         d)
+            set -x
+            ;;
+         v)
+            VARIABLES_FILE=$PWD/$OPTARG
+             ;;
+         h)
+             usage
+             exit 0
+             ;;
+         l)
+            ANSIBLE_EXTRA_ARGS=${ANSIBLE_EXTRA_ARGS}" --connection=local"
+
+            echo -e "\n [I] use -p if if failing for sudo/password stuffs\n"
+            ;;
+         s)
+            ANSIBLE_EXTRA_ARGS=${ANSIBLE_EXTRA_ARGS}" --become"
+            ;;
+         p)
+            ANSIBLE_EXTRA_ARGS=${ANSIBLE_EXTRA_ARGS}" --ask-become-pass"
+            ;;
+         i)
+            INVENTORY_FILE=$PWD/$OPTARG
+            ;;
+         \?)
+            echo "Unknown option: -$OPTARG" >&2
+            exit 1
+            ;;
+         :) echo "Missing option argument for -$OPTARG" >&2; exit 1
+            ;;
+        esac
+    done
+
+    return 0
+}
+
+cmdline "$@"
+
+# we change cwd so that the vagrant key is correctly found
+cd $PROVISION_DIR
+
+exec ansible-playbook                               \
+        --inventory-file="${INVENTORY_FILE}"   \
+        --extra-vars @"${VARIABLES_FILE}"      \
+        ${ANSIBLE_EXTRA_ARGS}                  \
+        "${PLAYBOOK}"
+
+
