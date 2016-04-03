@@ -2,6 +2,11 @@ import shelve
 import re
 import json
 import atexit
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 # This directory maps slack channel IDs (not names) to sets of user IDs
 directory = shelve.open('teams.db')
