@@ -1,0 +1,9 @@
+[program:{{ webapp_username }}]
+command={{ site_web_root }}.virtualenv/bin/python {{ site_web_root }}app/rtmbot.py --config {{ site_web_root }}rtmbot.conf
+redirect_stderr=true
+stdout_logfile={{ site_web_root }}logs/{{ webapp_username }}.log
+stderr_logfile={{ site_web_root }}logs/{{ webapp_username }}_error.log
+autostart=true
+autorestart=true
+stopsignal=QUIT
+

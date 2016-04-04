@@ -1,0 +1,9 @@
+---
+site_web_root: '/home/teambot/'
+webapp_username: 'teambot'
+extra_packages:
+  - build-essential
+  - python-virtualenv
+  - python-dev
+  - vim
+webapp_public_key: 'id_rsa_teambot.pub'
