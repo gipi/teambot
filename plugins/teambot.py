@@ -2,6 +2,11 @@ import shelve
 import re
 import json
 import atexit
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 # This directory maps slack channel IDs (not names) to sets of user IDs
 directory = shelve.open('teams.db')
@@ -56,8 +61,7 @@ def handle_direct_message(dm_channel_id, data):
     # Accept messages of the form "command #channel [@user...]"
     match = re.match('^(?P<cmd>\w+)\s+<#(?P<channel>C\w+)>(?P<people>(\s+<@U\w+>)*)$', text)
     if not match:
-        send(dm_channel_id, "I didn't recognize that command.")
-        send_help_text(dm_channel_id)
+        logger.debug('{} does not recognize this command'.format(__name__))
         return
 
     groups = match.groupdict()
@@ -147,10 +151,6 @@ def handle_direct_message(dm_channel_id, data):
             directory.sync()
 
             send(dm_channel_id, 'Team <#{}> deleted.'.format(team_channel_id))
-
-        else:
-            send(dm_channel_id, "I didn't recognize that command.")
-            send_help_text(dm_channel_id)
 
 def handle_channel_message(channel_id, data):
     text = data['text']
