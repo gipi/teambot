@@ -19,20 +19,38 @@ def dbg(debug_string):
         logging.info(debug_string)
 
 class RtmBot(object):
-    def __init__(self, token):
+    def __init__(self, token, main_channel=None):
+        self.main_channel = main_channel
         self.last_ping = 0
         self.token = token
         self.bot_plugins = []
         self.slack_client = None
+        self.channels = None
 
     def connect(self):
         """Convenience method that creates Server instance"""
         self.slack_client = SlackClient(self.token)
         self.slack_client.rtm_connect()
 
+    def get_channels_im_in(self):
+        channels_response = self.slack_client.api_call('channels.list')
+
+        if not channels_response['ok']:
+            logging.error('response failed: %s' % channels_response)
+            return
+
+        self.channels = [_['name'] for _ in channels_response['channels'] if _['is_member']]
+
+        logging.info('channels: %s' % ' '.join(self.channels))
+
     def start(self):
         self.connect()
+        self.get_channels_im_in()
         self.load_plugins()
+
+        if self.main_channel in self.channels:
+            self.slack_client.server.channels.find(self.main_channel).send_message('I restarted just now')
+
         while True:
             for reply in self.slack_client.rtm_read():
                 self.input(reply)
@@ -208,7 +226,15 @@ if __name__ == "__main__":
 
     config = yaml.load(file(args.config or 'rtmbot.conf', 'r'))
     debug = config["DEBUG"]
-    bot = RtmBot(config["SLACK_TOKEN"])
+
+    extra_args = {}
+
+    if config.has_key('main_channel'):
+        extra_args.update({
+            'main_channel': config['main_channel']
+        })
+
+    bot = RtmBot(config["SLACK_TOKEN"], **extra_args)
     site_plugins = []
     files_currently_downloading = []
     job_hash = {}
